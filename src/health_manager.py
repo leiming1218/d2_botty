@@ -103,28 +103,27 @@ class HealthManager:
                 # check rejuv first
                 success_drink_rejuv = False
                 last_drink = time.time() - self._last_rejuv
-                #It seems that hit recovery can delay the use of juvs and 15 frames is max recovery time. 
-                #To delay two juvs being used back to back, we'll need to wait the recovery time between uses.
-                #15 frames is 0.60 seconds.
-                if last_drink > 0.60: 
+                # It seems that hit recovery can delay the use of juvs and 15 frames is max recovery time.
+                # To delay two juvs being used back to back, we'll need to wait the recovery time between uses.
+                # 15 frames is 0.60 seconds.
+                if last_drink > 0.60:
                     if (health_percentage <= Config().char["take_rejuv_potion_health"]) or \
                         (mana_percentage <= Config().char["take_rejuv_potion_mana"]):
                         success_drink_rejuv = belt.drink_potion("rejuv", stats=[health_percentage, mana_percentage])
-                        #failure to drink juv (likely out of juvs). Perform chicken
                         if not success_drink_rejuv:
                             Logger.warning(f"Failed to drink rejuv. Trying to chicken, player HP {(health_percentage*100):.1f}%!")
-                            self._do_chicken(img)    
+                            self._do_chicken(img)
                             continue
                         self._last_rejuv = time.time()
 
-                        #if we drink two juvs within 8 seconds of one another, may be in bad state.  Perform chicken
-                        if last_drink < 8:
-                            Logger.warning(f"Two juvs drank within {last_drink} seconds. Trying to chicken, player HP {(health_percentage*100):.1f}%!")
-                            self._do_chicken(img)
-                            continue
+                # If we drink two juvs within 5 seconds of one another, may be in bad state. Perform chicken.
+                if last_drink < 5:
+                    Logger.warning(f"Two juvs drank within {last_drink} seconds. Trying to chicken, player HP {(health_percentage*100):.1f}%!")
+                    self._do_chicken(img)
+                    continue
 
-                # Default chicken if health is below threshold.
-                if health_percentage <= Config().char["chicken"]:
+                # Default chicken if health is below threshold, but give it a 6 sec delay to avoid endless loops.
+                if health_percentage <= Config().char["chicken"] and (time.time() - start) > 6:
                     Logger.warning(f"Trying to chicken, player HP {(health_percentage*100):.1f}%!")
                     self._do_chicken(img)
                     continue
