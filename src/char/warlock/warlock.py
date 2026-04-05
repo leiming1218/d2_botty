@@ -33,11 +33,11 @@ class Warlock(IChar):
             wait(0.04)
             mouse.click(button="right")
             wait(casting_delay)
-        if self._skill_hotkeys["summon_demon_2"]:
-            keyboard.send(self._skill_hotkeys["summon_demon_2"])
-            wait(0.04)
-            mouse.click(button="right")
-            wait(self._cast_duration)
+        # if self._skill_hotkeys["summon_demon_2"]:
+        #     keyboard.send(self._skill_hotkeys["summon_demon_2"])
+        #     wait(0.04)
+        #     mouse.click(button="right")
+        #     wait(self._cast_duration)
         
     def cast_town_buffs(self, curr_loc: Location):
         #Determine where to move mouse for summoning/consume based on location.
@@ -56,14 +56,23 @@ class Warlock(IChar):
 
         if self._skill_hotkeys["summon_demon"]:
             keyboard.send(self._skill_hotkeys["summon_demon"])
-            wait(0.04)
+            wait(0.06, 0.08)
             mouse.click(button="right")
             wait(self._cast_duration)
         if self._skill_hotkeys["consume"]:
             keyboard.send(self._skill_hotkeys["consume"])
-            wait(0.08) #extra wait to ensure summon is active
+            wait(0.08,0.08) #extra wait to ensure summon is active
             mouse.click(button="right")
             wait(self._cast_duration)
+
+
+        wait(0.5, 1.0)
+        if self._skill_hotkeys["summon_demon_2"]:
+            keyboard.send(self._skill_hotkeys["summon_demon_2"])
+            wait(0.06, 0.08)
+            mouse.click(button="right")
+            wait(self._cast_duration)
+
         
     def _cast_deathmark(self, cast_pos_abs: tuple[float, float]):
         if self._skill_hotkeys["deathmark"]:

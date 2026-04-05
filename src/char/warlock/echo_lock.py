@@ -93,3 +93,64 @@ class EchoLock(Warlock):
             wait(0.40)
             keyboard.send(Config().char["teleport"])
         return True
+    
+    def _echo_striking(self, cast_pos_abs: tuple[float, float], delay: tuple[float, float] = (0.2, 0.3), spray: int = 10):
+        keyboard.send(Config().char["stand_still"], do_release=False)
+        if self._skill_hotkeys["echo_strike"]:
+            keyboard.send(self._skill_hotkeys["echo_strike"])
+        for _ in range(4):
+            x = cast_pos_abs[0] + (random.random() * 2 * spray - spray)
+            y = cast_pos_abs[1] + (random.random() * 2 * spray - spray)
+            pos_m = convert_abs_to_monitor((x, y))
+            mouse.move(*pos_m, delay_factor=[0.3, 0.6])
+            mouse.press(button="right")
+            wait(delay[0], delay[1])
+            mouse.release(button="right")
+        keyboard.send(Config().char["stand_still"], do_press=False)
+
+    def _death_mark(self, cast_pos_abs: tuple[float, float], delay: tuple[float, float] = (0.2, 0.3)):
+        if self._skill_hotkeys["deathmark"]:
+            pos_m = convert_abs_to_monitor((cast_pos_abs[0], cast_pos_abs[1]))
+            mouse.move(*pos_m, delay_factor=[0.3, 0.6])
+            keyboard.send(self._skill_hotkeys["deathmark"])
+            mouse.click(button="right")
+            wait(delay[0], delay[1])
+    
+    def kill_eldritch(self) -> bool:
+        eld_pos_abs = convert_screen_to_abs(Config().path["eldritch_end"][0])
+        cast_pos_abs = [eld_pos_abs[0] * 0.9, eld_pos_abs[1] * 0.9]
+
+        #put monster firstly
+        self._cast_deathmark(cast_pos_abs);
+
+        for _ in range(int(Config().char["atk_len_eldritch"])):
+            self._echo_striking(cast_pos_abs, spray=90)
+        # Move to items
+        wait(self._cast_duration, self._cast_duration + 0.2)
+        pos_m = convert_abs_to_monitor((70, -200))
+        self.pre_move()
+        self.move(pos_m, force_move=True)        
+        self._pather.traverse_nodes((Location.A5_ELDRITCH_SAFE_DIST, Location.A5_ELDRITCH_END), self, timeout=1.4, force_tp=False)
+
+    
+    def kill_shenk(self) -> bool:
+        shenk_pos_abs = self._pather.find_abs_node_pos(149, grab())
+        if shenk_pos_abs is None:
+            shenk_pos_abs = convert_screen_to_abs(Config().path["shenk_end"][0])
+        cast_pos_abs = [shenk_pos_abs[0] * 0.9, shenk_pos_abs[1] * 0.9]
+
+        #put monster firstly
+        self._cast_deathmark(cast_pos_abs);
+        for _ in range(int(Config().char["atk_len_shenk"] * 0.5)):
+            self._echo_striking(cast_pos_abs, spray=90)
+
+
+        cast_pos_abs = [shenk_pos_abs[0] * 0.1, shenk_pos_abs[1] * 0.1]
+        for _ in range(int(Config().char["atk_len_shenk"])):
+            self._pather.traverse_nodes((Location.A5_SHENK_SAFE_DIST, Location.A5_SHENK_END), self, timeout=1.4, force_tp=False)
+            self._echo_striking([0,0], spray=90)
+
+        # Move to items
+        wait(self._cast_duration, self._cast_duration + 0.2)
+        # self._pather.traverse_nodes((Location.A5_SHENK_SAFE_DIST, Location.A5_SHENK_END), self, timeout=1.4, force_tp=False)
+        return True
