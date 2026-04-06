@@ -24,11 +24,11 @@ class EchoLock(Warlock):
         if self._skill_hotkeys["hex_bane"]:
             keyboard.send(self._skill_hotkeys["hex_bane"])
             mouse.click(button="right")
-            wait(casting_delay)
+            wait(self._cast_duration, self._cast_duration + 0.2)
         if self._skill_hotkeys["eldritch_blast"]:
             keyboard.send(self._skill_hotkeys["eldritch_blast"])
             mouse.click(button="right")
-            wait(casting_delay)
+            wait(self._cast_duration, self._cast_duration + 0.2)
 
     def _cast_echo_blast(self):
         n_move = (0, -10)
@@ -150,7 +150,24 @@ class EchoLock(Warlock):
             self._pather.traverse_nodes((Location.A5_SHENK_SAFE_DIST, Location.A5_SHENK_END), self, timeout=1.4, force_tp=False)
             self._echo_striking([0,0], spray=90)
 
-        # Move to items
+        return True
+    
+    def kill_pindle(self) -> bool:
+
+        # wait(0.2)
+        # self._pather.traverse_nodes((Location.A5_PINDLE_SAFE_DIST, Location.A5_PINDLE_END), self, timeout=1.0, do_pre_move=False, force_tp=True, use_tp_charge=True)
+        
+        pindle_pos_abs = convert_screen_to_abs(Config().path["pindle_end"][0])
+        cast_pos_abs = [pindle_pos_abs[0] * 0.9, pindle_pos_abs[1] * 0.9]
+
+        #put monster firstly
+        self._cast_deathmark(cast_pos_abs);
+
+        for _ in range(int(Config().char["atk_len_pindle"])):
+            # self._pather.traverse_nodes((Location.A5_PINDLE_SAFE_DIST, Location.A5_PINDLE_END), self, timeout=1.0)
+            self._echo_striking(cast_pos_abs, spray=11)
+
         wait(self._cast_duration, self._cast_duration + 0.2)
-        # self._pather.traverse_nodes((Location.A5_SHENK_SAFE_DIST, Location.A5_SHENK_END), self, timeout=1.4, force_tp=False)
+        # Move to items
+        self._pather.traverse_nodes((Location.A5_PINDLE_SAFE_DIST, Location.A5_PINDLE_END), self, timeout=1.0)
         return True

@@ -59,6 +59,9 @@ class Warlock(IChar):
             wait(0.06, 0.08)
             mouse.click(button="right")
             wait(self._cast_duration)
+
+        # wait for a longer timer for warlock casting
+        wait(0.5, 1.0)
         if self._skill_hotkeys["consume"]:
             keyboard.send(self._skill_hotkeys["consume"])
             wait(0.08,0.08) #extra wait to ensure summon is active
