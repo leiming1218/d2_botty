@@ -36,3 +36,4 @@ dependencies:
     - typing_extensions
     - colorama
     - dataclasses-json
+    - pytesseract

@@ -25,9 +25,9 @@ class NovaSorc(Sorceress):
         start = time.time()
         while (time.time() - start) < time_in_s:
             mouse.press(button="right")
-            wait(0.06, 0.08)
+            wait(self._cast_duration/2)
             mouse.release(button="right")
-            wait(self._cast_duration-0.06)
+            wait(self._cast_duration/2)
 
     def _move_and_attack(self, abs_move: tuple[int, int], atk_len: float):
         pos_m = convert_abs_to_monitor(abs_move)

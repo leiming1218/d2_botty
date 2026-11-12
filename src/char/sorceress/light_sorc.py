@@ -68,15 +68,19 @@ class LightSorc(Sorceress):
     def kill_eldritch(self) -> bool:
         eld_pos_abs = convert_screen_to_abs(Config().path["eldritch_end"][0])
         cast_pos_abs = [eld_pos_abs[0] * 0.9, eld_pos_abs[1] * 0.9]
-        self._lightning(cast_pos_abs, spray=50)
+        #self._lightning(cast_pos_abs, spray=50)
         for _ in range(int(Config().char["atk_len_eldritch"])):
-            self._chain_lightning(cast_pos_abs, spray=90)
+            self._chain_lightning(cast_pos_abs, spray=60)
         # Move to items
         wait(self._cast_duration, self._cast_duration + 0.2)
+
+        self._pather.traverse_nodes((Location.A5_ELDRITCH_SAFE_DIST, Location.A5_ELDRITCH_END), self, timeout=1.4, force_tp=True)
+        """
         pos_m = convert_abs_to_monitor((70, -200))
         self.pre_move()
         self.move(pos_m, force_move=True)        
         self._pather.traverse_nodes(Location.A5_ELDRITCH_SAFE_DIST, Location.A5_ELDRITCH_END)
+        """
         return True
 
     def kill_shenk(self) -> bool:

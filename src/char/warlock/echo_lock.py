@@ -142,13 +142,17 @@ class EchoLock(Warlock):
     
     def kill_pindle(self) -> bool:
         pindle_pos_abs = convert_screen_to_abs(Config().path["pindle_end"][0])
-        cast_pos_abs = [pindle_pos_abs[0] * 0.9, pindle_pos_abs[1] * 0.9]
+        cast_pos_abs = [pindle_pos_abs[0] * 0.8, pindle_pos_abs[1] * 0.8]
+
+        # move a little bit close
+        new_pos = [pindle_pos_abs[0] * 0.6, pindle_pos_abs[1] * 0.6]
+        self.move(convert_abs_to_monitor(new_pos),force_move=True)
 
         #put monster firstly
         self._cast_deathmark(cast_pos_abs);
 
         for _ in range(int(Config().char["atk_len_pindle"])):
-            self._echo_striking(cast_pos_abs, spray=11)
+            self._echo_striking(cast_pos_abs, spray=50)
 
         wait(self._cast_duration, self._cast_duration + 0.2)
         # Move to items

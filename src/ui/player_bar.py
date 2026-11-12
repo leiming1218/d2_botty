@@ -32,15 +32,36 @@ def get_experience():
     )[0]
 
     split_text = ocr_result.text.split(' ')
-
+    Logger.info(f"ocr experience: {split_text}")
+    
     try:
-        split_text = split_text[split_text.index("EXPERIENCE:"):]
-        current_exp = int(split_text[1].replace(',', '').replace('.', ''))
-        required_exp = int(split_text[3].replace(',', '').replace('.', ''))
-        return current_exp, required_exp
+        # Search for "EXP" to get the correct starting point
+        index = next((i for i, s in enumerate(split_text) if "EXP" in s), None)
+        
+        # Use 'is not None' because index 0 is a valid position!
+        if index is not None:
+            # Ensure the list is long enough to have indices [index+1] and [index+3]
+            if len(split_text) > index + 3:
+                # Cleaning and converting
+                curr_raw = split_text[index + 1].replace(',', '').replace('.', '')
+                req_raw = split_text[index + 3].replace(',', '').replace('.', '')
+                
+                # Using digit filter for maximum safety against stray OCR characters
+                current_exp = int(''.join(filter(str.isdigit, curr_raw)))
+                required_exp = int(''.join(filter(str.isdigit, req_raw)))
+                
+                return current_exp, required_exp
+            else:
+                Logger.warning(f"Found 'EXP' but data is missing or incomplete: {split_text}")
+        
+        else:
+            Logger.warning(f"Can not find 'EXP' in OCR text: {split_text}.")
+            
+        return 0, 0
+        
     except Exception as e:
         Logger.warning(f"EXP OCR Error: {split_text}. Exception: {e}")
-        return 0,0
+        return 0, 0
 
 
 if __name__ == "__main__":

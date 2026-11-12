@@ -44,6 +44,8 @@ from town import TownManager, A1, A2, A3, A4, A5, town_manager
 from messages import Messenger
 from threading import Lock
 
+import tz_locker
+
 class Bot:
 
     def __init__(self, game_stats: GameStats):
@@ -274,6 +276,8 @@ class Bot:
             self.restart_or_exit()
         self.trigger_or_stop("start_from_town")
 
+    current_hour_min = {"hour":5 , "min": 5}
+
     def on_start_from_town(self):
         self._curr_loc = self._town_manager.wait_for_town_spawn()
         if not self._curr_loc:
@@ -291,6 +295,53 @@ class Bot:
             keybind = Config().char["teleport"]
             Logger.info(f"Teleport keybind is lost upon death. Rebinding teleport to '{keybind}'")
             self._char.remap_right_skill_hotkey("TELE_ACTIVE", Config().char["teleport"])
+
+        # try to lock the TZ ,  
+        # eldretch tz time period: 3:00 to 3:30, 1：00PM？
+        # Chaos tz: 7:00 to 7:30
+        # Tomb tz: 11:00 to 11:30
+        # Cattle tz: 12:00 to 12:30
+        # because TZ changes every 30min
+
+        # for sor,  
+        # Tom tz: 5:00- 5:30
+        # Chaos 15:00
+        # Trav: 11:00
+        # eldretch tz: 13:00
+        self.current_hour_min["min"] = self.current_hour_min["min"] + 30
+        if (self.current_hour_min["min"] > 60):
+            self.current_hour_min["hour"] = (self.current_hour_min["hour"] + 1) % 24
+            self.current_hour_min["min"] = self.current_hour_min["min"] - 60
+        
+        if False:
+            tz_locker.check_time_and_update(self.current_hour_min["hour"], self.current_hour_min["min"], 1)
+        else:
+            tz_locker.check_time_and_update(9, 35, 20)
+        # try to read TZ area string, so we can run smarter.
+        # no run eldritch, we have to use run_shenk 
+        """
+        run_tz_area = None
+        tz_area_check_list = {"Frigid": "run_shenk", 
+                              "Pain": "run_pindle"  # Hall of Pain
+                              }  # for test purpose
+        start = time.time()
+        while (time.time() - start) < 3.0:
+            text = view.img_to_string(ScreenObjects.TZAreaText)
+            # Logger.info(f"TZ text: {text}")
+            run_tz_area = [value for key,value in tz_area_check_list.items() if key in text and "Corrupted" in text]
+            if len(run_tz_area) > 0:
+                Logger.info(f"Found matched TZ, will {run_tz_area}")
+                break
+            else:
+                wait(0.05)
+                
+        if len(run_tz_area) > 0:
+            # update the run list
+            tmp = {run_tz_area[0]: True}
+            self._do_runs.clear()
+            self._do_runs.update(tmp)
+        """
+
 
         # Run /nopickup command to avoid picking up stuff on accident
         if Config().char["enable_no_pickup"] and (not self._ran_no_pickup and not self._game_stats._nopickup_active):

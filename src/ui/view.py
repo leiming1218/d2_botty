@@ -10,7 +10,29 @@ from inventory import common
 from screen import convert_screen_to_monitor
 from threading import Lock
 
+import pytesseract
+import cv2
+
+
 exit_mutex = Lock()
+
+def img_to_string(scrObj:ScreenObjects) -> str:
+    x, y, w, h = Config().ui_roi[scrObj.roi]
+
+    img = grab()
+    img = img[y:y+h, x:x+w]
+    
+    # 2. Convert BGR to RGB for Tesseract
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # 3. OCR the image
+    # Using --psm 6 or 7 often helps with small screen snippets
+    text = pytesseract.image_to_string(img_rgb, config='--psm 6')
+    text =  text.strip()
+
+    #Logger.info(f"img_to_string: {scrObj.roi}-->{text}")
+    return text
+
 
 def enable_no_pickup() -> bool:
     # """
@@ -22,17 +44,27 @@ def enable_no_pickup() -> bool:
     keyboard.write('/nopickup',delay=.20)
     keyboard.send('enter')
     wait(0.1, 0.25)
-    if not (item_pickup_text := wait_until_visible(ScreenObjects.ItemPickupText, timeout=1.3)).valid:
-         return False
-    if item_pickup_text.name == "ITEM_PICKUP_DISABLED":
-         return True
-    keyboard.send('enter')
-    wait(0.1, 0.25)
-    keyboard.send('up')
-    wait(0.1, 0.25)
-    keyboard.send('enter')
-    wait(0.1, 0.25)
-    return True
+
+    start = time.time()
+    while (time.time() - start) < 2.0:
+        text = img_to_string(ScreenObjects.ItemPickupText)
+
+        if "Enabled" in text:
+            keyboard.send('enter')
+            wait(0.1, 0.25)
+            keyboard.send('up')
+            wait(0.1, 0.25)
+            keyboard.send('enter')
+            wait(0.1, 0.25)
+            return True
+            
+        if "Disabled" in text:
+            return True
+        wait(0.05)
+    
+    # timeout and we don't know the status
+    return False
+
 
 def fast_save_and_exit() -> bool:
     """

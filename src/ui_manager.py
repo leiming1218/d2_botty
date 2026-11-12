@@ -124,6 +124,11 @@ class ScreenObjects:
         ref="REPAIR_NEEDED",
         roi="repair_needed"
     )
+    TZAreaText=ScreenObject(
+        ref=["USELESS","USELESS"],
+        roi="tz_string",
+        best_match=True
+    )
     ItemPickupText=ScreenObject(
         ref=["ITEM_PICKUP_ENABLED","ITEM_PICKUP_DISABLED"],
         roi="chat_line_1",
