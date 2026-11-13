@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 import keyboard
 import os
 from beautifultable import BeautifulTable
@@ -13,6 +14,7 @@ from game_controller import GameController
 from utils.graphic_debugger import GraphicDebuggerController
 from utils.misc import restore_d2r_window_visibility
 from utils.auto_settings import adjust_settings, backup_settings, restore_settings_from_backup
+from utils.start_time import is_bot_start_time_allowed
 
 @dataclass
 class Controllers():
@@ -25,6 +27,11 @@ def start_or_pause_bot(controllers: Controllers):
         controllers.game.toggle_pause_bot()
         screen.stop_detecting_window()
     else:
+        now = datetime.now()
+        if not is_bot_start_time_allowed(now.time()):
+            report_start_time_restriction(now)
+            on_exit()
+            return
         # Kill any other controllers and start botty
         controllers.debugger.stop()
         screen.start_detecting_window()
@@ -46,6 +53,14 @@ def on_exit():
     restore_d2r_window_visibility()
     os._exit(1)
 
+
+def report_start_time_restriction(now: datetime):
+    print(
+        "\nBotty can only be started between 7:00 AM and 11:00 PM local time. "
+        f"Current local time: {now.strftime('%I:%M %p')}. Exiting.\n"
+    )
+
+
 def startup_checks():
     # check if paths contain non-ascii characters
     check_for_non_ascii = {
@@ -59,7 +74,12 @@ def startup_checks():
             print(f"\n!! WARNING: {key} ({value}) contains incompatible characters. This could result in Botty encoding errors.\n")
 
 
-def main():
+def main() -> bool:
+    now = datetime.now()
+    if not is_bot_start_time_allowed(now.time()):
+        report_start_time_restriction(now)
+        return False
+
     # Create folder for debug screenshots if they dont exist yet
     for dir_name in ["log", "log/stats", "log/screenshots", "log/screenshots/info", "log/screenshots/items", "log/screenshots/pickit", "log/screenshots/generated"]:
         os.makedirs(dir_name, exist_ok=True)
@@ -97,15 +117,16 @@ def main():
     keyboard.add_hotkey(Config().advanced_options['resume_key'], lambda: start_or_pause_bot(controllers))
     keyboard.add_hotkey(Config().advanced_options["exit_key"], lambda: on_exit())
     keyboard.wait()
+    return True
 
 
 if __name__ == "__main__":
     # To avoid cmd just closing down, except any errors and add a input() to the end
     try:
-        game_controller = GameController()
-        debugger_controller = GraphicDebuggerController()
-        main()
+        should_keep_console_open = main()
     except:
         traceback.print_exc()
-    print("Press Enter to exit ...")
-    input()
+        should_keep_console_open = True
+    if should_keep_console_open:
+        print("Press Enter to exit ...")
+        input()

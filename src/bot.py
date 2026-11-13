@@ -1,5 +1,6 @@
 from transitions import Machine
 import time
+from datetime import datetime
 import keyboard
 import time
 import os
@@ -11,8 +12,9 @@ from collections import OrderedDict
 
 from health_manager import set_pause_state
 from transmute import Transmute
-from utils.misc import wait, hms
+from utils.misc import wait, hms, restore_d2r_window_visibility
 from utils.restart import safe_exit, restart_game
+from utils.start_time import is_bot_start_time_allowed
 from game_stats import GameStats
 from logger import Logger
 from config import Config
@@ -525,14 +527,16 @@ class Bot:
             Logger.debug(f'Session length = {math.ceil(elapsed_time/60)} minutes, max_runtime_before_break_m {Config().general["max_runtime_before_break_m"]}.')
 
             if elapsed_time > (Config().general["max_runtime_before_break_m"]*60):
-                break_msg = f'Ran for {hms(elapsed_time)}, taking a break for {hms(Config().general["break_length_m"]*60)}.'
+                break_length_m = Config().general["break_length_m"]
+                break_length_s = random.uniform(break_length_m * 0.8, break_length_m * 1.2) * 60
+                break_msg = f'Ran for {hms(elapsed_time)}, taking a break for {hms(break_length_s)}.'
                 Logger.info(break_msg)
                 if self._messenger.enabled:
                     self._messenger.send_message(break_msg)
                 if not self._pausing:
                     self.toggle_pause()
 
-                wait(Config().general["break_length_m"]*60)
+                wait(break_length_s)
 
                 break_msg = f'Break over, will now run for {hms(Config().general["max_runtime_before_break_m"]*60)}.'
                 Logger.info(break_msg)
@@ -549,6 +553,18 @@ class Bot:
         self._do_runs.update(self._do_runs_reset)
         if Config().general["randomize_runs"]:
             self.shuffle_runs()
+
+        now = datetime.now()
+        if not is_bot_start_time_allowed(now.time()):
+            message = (
+                "Bot stopping after this game: the local time "
+                f"({now.strftime('%I:%M %p')}) is outside the 7:00 AM to 11:00 PM start window."
+            )
+            Logger.info(message)
+            print(message, flush=True)
+            restore_d2r_window_visibility()
+            os._exit(0)
+
         self.trigger_or_stop("init")
 
     def on_end_run(self):
